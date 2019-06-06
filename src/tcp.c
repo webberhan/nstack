@@ -413,7 +413,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 
     return retval;
 }
-IP_PROTO_INPUT_HANDLER(IP_PROTO_TCP, tcp_input);
+IP_PROTO_INPUT_HANDLER(IP_PROTO_TCP, tcp_input); // webber: peak tcp_input
 
 int nstack_tcp_bind(struct nstack_sock *sock)
 {

@@ -203,7 +203,7 @@ static int arp_input(const struct ether_hdr *hdr __unused,
     }
     return 0;
 }
-ETHER_PROTO_INPUT_HANDLER(ETHER_PROTO_ARP, arp_input);
+ETHER_PROTO_INPUT_HANDLER(ETHER_PROTO_ARP, arp_input); // webber: drill down arp_input
 
 /**
  * @param[in] sha

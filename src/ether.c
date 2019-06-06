@@ -10,12 +10,12 @@ const mac_addr_t mac_broadcast_addr = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 int ether_input(const struct ether_hdr *hdr, uint8_t *payload, size_t bsize)
 {
     struct _ether_proto_handler **tmpp;
-    struct _ether_proto_handler *proto;
+    struct _ether_proto_handler *proto; // webber:
     int retval;
 
     SET_FOREACH (tmpp, _ether_proto_handlers) {
         proto = *tmpp;
-        if (proto->proto_id == hdr->h_proto)
+        if (proto->proto_id == hdr->h_proto)  // webber: search _ether_proto_handlers, ETHER_PROTO_INPUT_HANDLER
             break;
         proto = NULL;
     }

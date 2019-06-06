@@ -76,7 +76,7 @@ static int udp_input(const struct ip_hdr *ip_hdr,
                      uint8_t *payload,
                      size_t bsize)
 {
-    struct udp_hdr *udp = (struct udp_hdr *) payload;
+    struct udp_hdr *udp = (struct udp_hdr *) payload; // webber: parse udp header from ip payload
     struct nstack_sock *sock;
     struct nstack_sockaddr sockaddr;
 
@@ -88,9 +88,9 @@ static int udp_input(const struct ip_hdr *ip_hdr,
 
     udp_ntoh(udp, udp);
 
-    sockaddr.inet4_addr = ip_hdr->ip_dst;
-    sockaddr.port = udp->udp_dport;
-    sock = find_udp_socket(&sockaddr);
+    sockaddr.inet4_addr = ip_hdr->ip_dst; // webber: copy
+    sockaddr.port = udp->udp_dport; // webber: copy
+    sock = find_udp_socket(&sockaddr); //webber:  檢查 port 是否有在 listen 並找出 listen 的 socket
     if (sock) {
         int retval;
         struct nstack_sockaddr srcaddr = {
@@ -100,7 +100,7 @@ static int udp_input(const struct ip_hdr *ip_hdr,
 
         retval = nstack_sock_dgram_input(sock, &srcaddr,
                                          payload + sizeof(struct udp_hdr),
-                                         bsize - sizeof(struct udp_hdr));
+                                         bsize - sizeof(struct udp_hdr)); // webber: handle datagram
         if (retval > 0) {
             /*
              * RFE The following code is probably not needed as
@@ -109,8 +109,8 @@ static int udp_input(const struct ip_hdr *ip_hdr,
             udp_port_t tmp;
 
             /* Swap ports */
-            tmp = udp->udp_sport;
-            udp->udp_sport = udp->udp_dport;
+            tmp = udp->udp_sport; // webber: copy
+            udp->udp_sport = udp->udp_dport; 
             udp->udp_dport = tmp;
 
             udp->udp_len = sizeof(struct udp_hdr) + retval;
@@ -131,7 +131,7 @@ static int udp_input(const struct ip_hdr *ip_hdr,
         return -ENOTSOCK;
     }
 }
-IP_PROTO_INPUT_HANDLER(IP_PROTO_UDP, udp_input);
+IP_PROTO_INPUT_HANDLER(IP_PROTO_UDP, udp_input); // webber: drill down udp_input
 
 static uint16_t udp_checksum(const void *buff,
                              size_t len,

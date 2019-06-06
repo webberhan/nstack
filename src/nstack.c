@@ -44,7 +44,7 @@ static nstack_send_fn *proto_send[] = {
 };
 
 static struct nstack_sock sockets[] = {
-    {
+    {// webber: 建立一個 UDP socket 聽在 port 10 ，並將 shared memeory 檔案建立在  "/tmp/unetcat.sock"
         .info.sock_dom = XF_INET4,
         .info.sock_type = XSOCK_DGRAM,
         .info.sock_proto = XIP_PROTO_UDP,
@@ -127,9 +127,9 @@ int nstack_sock_dgram_input(struct nstack_sock *sock,
     dgram->srcaddr = *srcaddr;
     dgram->dstaddr = sock->info.sock_addr;
     dgram->buf_size = bsize;
-    memcpy(dgram->buf, buf, bsize);
+    memcpy(dgram->buf, buf, bsize); // webber: copy payload
 
-    queue_commit(sock->ingress_q);
+    queue_commit(sock->ingress_q); // webber: for listen 的 socket to handle datagram with nstack_recvfrom, drill down nstack_recvfrom
     kill(sock->ctrl->pid_end, SIGUSR2);
 
     return 0;
@@ -155,27 +155,27 @@ static void run_periodic_tasks(int delta_time)
  */
 static void *nstack_ingress_thread(void *arg)
 {
-    static uint8_t rx_buffer[ETHER_MAXLEN];
+    static uint8_t rx_buffer[ETHER_MAXLEN]; // L2 payload
 
     while (1) {
-        struct ether_hdr hdr;
+        struct ether_hdr hdr;   // webber: peak, L2 header
         int retval;
 
         LOG(LOG_DEBUG, "Waiting for rx");
 
         retval =
-            ether_receive(ether_handle, &hdr, rx_buffer, sizeof(rx_buffer));
+            ether_receive(ether_handle, &hdr, rx_buffer, sizeof(rx_buffer)); // webber: drill down
         if (retval == -1) {
             LOG(LOG_ERR, "Rx failed: %d", errno);
         } else if (retval > 0) {
             LOG(LOG_DEBUG, "Frame received!");
 
-            retval = ether_input(&hdr, rx_buffer, retval);
+            retval = ether_input(&hdr, rx_buffer, retval); // webber: drill down
             if (retval == -1) {
                 LOG(LOG_ERR, "Protocol handling failed: %d", errno);
             } else if (retval > 0) {
                 retval =
-                    ether_output_reply(ether_handle, &hdr, rx_buffer, retval);
+                    ether_output_reply(ether_handle, &hdr, rx_buffer, retval); // webber: drill down
                 if (retval < 0) {
                     LOG(LOG_ERR, "Reply failed: %d", errno);
                 }
@@ -258,7 +258,7 @@ static void nstack_init(void)
 {
     pid_t mypid = getpid();
 
-    for (size_t i = 0; i < num_elem(sockets); i++) {
+    for (size_t i = 0; i < num_elem(sockets); i++) { // webber: peak sockets
         struct nstack_sock *sock = sockets + i;
         int fd;
         void *pa;
@@ -311,7 +311,7 @@ int nstack_start(int handle)
 
     nstack_init();
 
-    if (pthread_create(&ingress_tid, NULL, nstack_ingress_thread, NULL)) {
+    if (pthread_create(&ingress_tid, NULL, nstack_ingress_thread, NULL)) { // webber: drill down nstack_ingress_thread
         return -1;
     }
 
@@ -334,7 +334,7 @@ void nstack_stop(void)
     set_state(NSTACK_STOPPED);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) // webber: start
 {
     char *const ether_args[] = {
         argv[1],
@@ -354,18 +354,18 @@ int main(int argc, char *argv[])
     /* Block sigset for all future threads */
     sigprocmask(SIG_SETMASK, &sigset, NULL);
 
-    handle = ether_init(ether_args);
+    handle = ether_init(ether_args); // webber: drill down
     if (handle == -1) {
         perror("Failed to init");
         exit(1);
     }
 
-    if (ip_config(handle, 167772162, 4294967040)) {
+    if (ip_config(handle, 167772162, 4294967040)) { // webber: 10.0.0.2, 255.255.255.0
         perror("Failed to config IP");
         exit(1);
     }
 
-    nstack_start(handle);
+    nstack_start(handle); // webber: drill down
 
     sigwaitinfo(&sigset, NULL);
 

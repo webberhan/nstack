@@ -164,7 +164,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
         arp_cache_insert(ip->ip_src, e_hdr->h_src, ARP_CACHE_DYN);
     }
 
-    if (ip_route_find_by_iface(ip->ip_dst, NULL)) {
+    if (ip_route_find_by_iface(ip->ip_dst, NULL)) {// webber: peak
         char dst_str[IP_STR_LEN];
 
         ip2str(ip->ip_dst, dst_str);
@@ -186,7 +186,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
         return 0;
     }
 
-    SET_FOREACH (tmpp, _ip_proto_handlers) {
+    SET_FOREACH (tmpp, _ip_proto_handlers) { // webber: search _ip_proto_handlers, IP_PROTO_INPUT_HANDLER
         proto = *tmpp;
         if (proto->proto_id == ip->ip_proto)
             break;
@@ -198,7 +198,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
     if (proto) {
         int retval;
 
-        retval = proto->fn(ip, payload + hlen, bsize - hlen);
+        retval = proto->fn(ip, payload + hlen, bsize - hlen); // webber: call handler
         if (retval > 0)
             retval = ip_reply_header(ip, retval);
         if (retval == -ENOTSOCK) {
@@ -215,7 +215,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
                                               payload + hlen, bsize - hlen);
     }
 }
-ETHER_PROTO_INPUT_HANDLER(ETHER_PROTO_IPV4, ip_input);
+ETHER_PROTO_INPUT_HANDLER(ETHER_PROTO_IPV4, ip_input);  // webber: drill down ip_input
 
 static inline size_t ip_off_round(size_t plen)
 {

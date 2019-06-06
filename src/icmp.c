@@ -48,7 +48,7 @@ static int icmp_input(const struct ip_hdr *ip_hdr __unused,
         return -ENOMSG;
     }
 }
-IP_PROTO_INPUT_HANDLER(IP_PROTO_ICMP, icmp_input);
+IP_PROTO_INPUT_HANDLER(IP_PROTO_ICMP, icmp_input); // webber: drill down icmp_input
 
 int icmp_generate_dest_unreachable(struct ip_hdr *hdr,
                                    int code,

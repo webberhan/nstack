@@ -63,7 +63,7 @@ ssize_t nstack_recvfrom(void *socket,
         };
 
         sigtimedwait(&sigset, NULL, &timeout);
-    } while (!queue_peek(ingress_q, &dgram_index));
+    } while (!queue_peek(ingress_q, &dgram_index)); // webber: socket app get datagram from queue, see also: nstack_sendto
     dgram =
         (struct nstack_dgram *) (NSTACK_INGRESS_DADDR(socket) + dgram_index);
 

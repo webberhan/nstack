@@ -124,7 +124,7 @@ int ether_init(char *const args[])
         strcpy(if_name, DEFAULT_IF);
     }
 
-    if ((eth->el_fd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW)) == -1)
+    if ((eth->el_fd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW)) == -1) // webber: peak SOCK_RAW
         return -1;
 
     /* Get the index of the interface */
@@ -177,33 +177,33 @@ void ether_deinit(int handle)
 int ether_receive(int handle, struct ether_hdr *hdr, uint8_t *buf, size_t bsize)
 {
     struct ether_linux *eth;
-    uint8_t frame[ETHER_MAXLEN] __attribute__((aligned));
-    struct ether_hdr *frame_hdr = (struct ether_hdr *) frame;
+    uint8_t frame[ETHER_MAXLEN] __attribute__((aligned)); // webber: 
+    struct ether_hdr *frame_hdr = (struct ether_hdr *) frame; // webber: ptr
     int retval;
 
     assert(hdr != NULL);
     assert(buf != NULL);
 
-    if (!(eth = ether_handle2eth(handle)))
+    if (!(eth = ether_handle2eth(handle))) // webber: peak
         return -1;
 
     do {
         retval =
-            (int) recvfrom(eth->el_fd, frame, sizeof(frame), 0, NULL, NULL);
+            (int) recvfrom(eth->el_fd, frame, sizeof(frame), 0, NULL, NULL); // webber: peak, linux kernel
         if (retval == -1 &&
             (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS)) {
             return 0;
         } else if (retval == -1) {
             return -1;
         }
-    } while (!memcmp(frame_hdr->h_src, eth->el_mac, sizeof(mac_addr_t)));
+    } while (!memcmp(frame_hdr->h_src, eth->el_mac, sizeof(mac_addr_t))); // webber: not from local
 
-    memcpy(hdr->h_dst, frame_hdr->h_dst, sizeof(mac_addr_t));
-    memcpy(hdr->h_src, frame_hdr->h_src, sizeof(mac_addr_t));
-    hdr->h_proto = ntohs(frame_hdr->h_proto);
+    memcpy(hdr->h_dst, frame_hdr->h_dst, sizeof(mac_addr_t)); // webber: copy L2 header
+    memcpy(hdr->h_src, frame_hdr->h_src, sizeof(mac_addr_t)); // webber:
+    hdr->h_proto = ntohs(frame_hdr->h_proto); // webber:
 
     retval -= ETHER_HEADER_LEN;
-    memcpy(buf, frame + ETHER_HEADER_LEN, min(retval, bsize));
+    memcpy(buf, frame + ETHER_HEADER_LEN, min(retval, bsize)); // webber: copy L2 payload
 
     return retval;
 }
